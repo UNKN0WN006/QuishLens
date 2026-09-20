@@ -58,3 +58,4 @@ class HealthResponse(BaseModel):
     threat_intel_domains: int
     payment_model_loaded: bool = False
     payment_model_name: str | None = None
+    qr_decoders: dict[str, Any] = Field(default_factory=dict)

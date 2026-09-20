@@ -155,7 +155,7 @@
     <section class="view advanced-only" id="view-method" aria-labelledby="methodHeading">
       <div class="section-intro"><p class="eyebrow">UNDER THE HOOD</p><h1 id="methodHeading">What happens after you upload a QR?</h1></div>
       <div class="method-flow">
-        <article><span>01</span><h3>Decode only QR symbols</h3><p>OpenCV is used first, then a QR-only ZBar fallback for symbols OpenCV struggles with. One-dimensional barcodes are deliberately ignored.</p></article>
+        <article><span>01</span><h3>Decode only QR symbols</h3><p>QuishLens cross-checks QR-only decoders (ZXing-C++, ZBar, and OpenCV) because stylised codes can defeat one decoder while another still succeeds. One-dimensional barcodes are deliberately ignored.</p></article>
         <article><span>02</span><h3>Understand the payload</h3><p>Web links, EMV-style payments, UPI, Wi-Fi, contacts, SMS, phone numbers, authenticator secrets, locations, and plain text are handled differently.</p></article>
         <article><span>03</span><h3>Inspect the risky bits</h3><p>URLs get domain/ML/threat analysis. Payment QR codes get TLV parsing, checksum verification, provider and receiver field inspection.</p></article>
         <article><span>04</span><h3>Explain before acting</h3><p>The result shows what was decoded and why it matters. QuishLens does not intentionally open a suspicious destination.</p></article>

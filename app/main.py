@@ -21,12 +21,13 @@ from app.config import (
     STATIC_DIR,
 )
 from app.scanner.file_scanner import scan_file
+from app.scanner.qr_detector import decoder_capabilities
 from app.schemas import HealthResponse, ScanResponse, URLRequest
 from app.service import QuishLensService
 
 app = FastAPI(
     title="QuishLens",
-    version="1.3.0",
+    version="1.4.0",
     description="QR payload inspection, payment parsing, and pre-click phishing analysis for images, PDFs, and URLs.",
 )
 app.add_middleware(
@@ -59,6 +60,7 @@ def health():
         threat_intel_domains=len(service.threat_intel.domains),
         payment_model_loaded=service.payment_model.loaded,
         payment_model_name=service.payment_model.metadata.get("model") if service.payment_model.loaded else None,
+        qr_decoders=decoder_capabilities(),
     )
 
 
