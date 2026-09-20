@@ -1,0 +1,3 @@
+# One normalized URL per line. Keep real malicious intelligence out of source control.
+# Import research/threat-feed snapshots locally before benchmarking.
+https://micros0ft-account-verify.example.invalid/login?continue=secure

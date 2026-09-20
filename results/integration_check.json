@@ -1,0 +1,15 @@
+{
+  "purpose": "Safe generated-sample integration check only — not a research benchmark",
+  "verified": [
+    "FastAPI application imports and serves the frontend",
+    "Suspicious demo PDF decodes its QR and reaches the risk engine",
+    "Suspicious demo QR decodes its URL",
+    "Benign demo QR decodes its URL",
+    "URL analysis endpoint returns structured evidence",
+    "QR adversarial transformation script runs",
+    "QR manifest evaluator runs",
+    "Document manifest evaluator runs",
+    "Unit test suite passes"
+  ],
+  "warning": "Do not quote generated-sample accuracy as model performance. Use CIC-Trap4Phish, PhiUSIIL, or another documented independent corpus."
+}

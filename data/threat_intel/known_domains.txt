@@ -1,0 +1,2 @@
+# One registered domain or hostname per line.
+micros0ft-account-verify.example.invalid

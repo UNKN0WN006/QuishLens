@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="QuishLens - pre-click QR phishing analysis for images, PDFs and URLs." />
+  <title>QuishLens — Pre-click QR Threat Analysis</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#scan" aria-label="QuishLens home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" role="img"><path d="M8 8h12v12H8zM28 8h12v12H28zM8 28h12v12H8zM29 29h5v5h-5zm7 0h4v11h-4zm-7 7h5v4h-5z"/><path d="M13 13h2v2h-2zm20 0h2v2h-2zm-20 20h2v2h-2z"/></svg>
+        </span>
+        <span><strong>QuishLens</strong><small>QR & document safety checker</small></span>
+      </a>
+      <div class="header-actions">
+        <button class="ghost-button compact" id="familyModeButton" type="button" aria-pressed="false">
+          <span aria-hidden="true">Aa</span> Simple view
+        </button>
+        <button class="status-pill" id="healthButton" type="button" title="View scanner status">
+          <span class="status-dot" id="healthDot"></span><span id="healthText">Checking engine…</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <nav>
+          <button class="nav-item active" data-view="scan" type="button"><span>01</span> Scan file</button>
+          <button class="nav-item" data-view="url" type="button"><span>02</span> Analyze URL</button>
+          <button class="nav-item" data-view="benchmark" type="button"><span>03</span> Benchmarks</button>
+          <button class="nav-item" data-view="method" type="button"><span>04</span> Method</button>
+        </nav>
+        <div class="sidebar-note">
+          <strong>Safety first</strong>
+          <p>QuishLens performs static analysis. It does not intentionally open the QR destination.</p>
+        </div>
+      </aside>
+
+      <main class="content" id="mainContent">
+        <section class="view active" id="view-scan" aria-labelledby="scanHeading">
+          <div class="hero-row">
+            <div>
+              <p class="eyebrow">PRE-CLICK FILE CHECK</p>
+              <h1 id="scanHeading">See where a QR code leads before opening it.</h1>
+              <p class="lead">Check a screenshot, photo, or PDF. QuishLens reads the QR code, inspects the destination and document wording, and explains the warning signs without intentionally visiting the target.</p>
+            </div>
+            <div class="hero-note"><strong>No destination visit</strong><span>Static inspection only</span></div>
+          </div>
+
+          <div class="drop-card" id="dropZone">
+            <input id="fileInput" type="file" accept=".png,.jpg,.jpeg,.webp,.bmp,.pdf" hidden />
+            <div class="drop-index" aria-hidden="true">FILE</div>
+            <h2>Drop a file to inspect</h2>
+            <p>PNG, JPG, WEBP, BMP or PDF · up to 12 MB</p>
+            <div class="drop-actions">
+              <button class="primary-button" id="chooseFileButton" type="button">Choose file</button>
+              <button class="ghost-button" id="loadDemoButton" type="button">Use local demo</button>
+            </div>
+            <p class="privacy-line">Uploads are processed by your running QuishLens server. This prototype does not intentionally navigate to decoded URLs.</p>
+          </div>
+
+          <div class="scan-progress hidden" id="scanProgress" aria-live="polite">
+            <div class="spinner"></div>
+            <div><strong id="scanProgressTitle">Inspecting file…</strong><span id="scanProgressText">Finding QR codes and extracting document context.</span></div>
+          </div>
+
+          <section id="resultPanel" class="result-panel hidden" aria-live="polite">
+            <div class="result-head">
+              <div>
+                <p class="eyebrow">Analysis result</p>
+                <h2 id="resultFilename">—</h2>
+                <p id="resultMeta" class="muted">—</p>
+              </div>
+              <div class="risk-scorecard" id="riskOrb"><div class="risk-number"><strong id="riskScore">0</strong><span>/100</span></div><div class="risk-track" aria-hidden="true"><i></i></div><small id="riskLabel">LOW</small></div>
+            </div>
+
+            <div class="plain-callout" id="plainCallout">
+              <span class="callout-icon">?</span>
+              <div><strong>What this means</strong><p id="plainLanguageText">—</p></div>
+            </div>
+
+            <div class="result-grid">
+              <article class="panel destination-panel">
+                <div class="panel-title"><h3>Decoded destination</h3><span class="tag" id="qrCountTag">0 QR</span></div>
+                <code id="payloadText">No web URL decoded</code>
+                <div class="mini-grid" id="destinationFacts"></div>
+              </article>
+
+              <article class="panel">
+                <div class="panel-title"><h3>Top evidence</h3><button class="text-button" id="showAllEvidenceButton" type="button">View all</button></div>
+                <div class="evidence-list" id="evidenceList"></div>
+              </article>
+            </div>
+
+            <article class="panel explanation-panel">
+              <div class="panel-title"><h3>Security explanation</h3><span class="tag neutral">Evidence-grounded</span></div>
+              <p id="technicalExplanation">—</p>
+              <div class="context-snippet hidden" id="contextSnippet"><strong>Document context detected</strong><p id="contextText">—</p></div>
+            </article>
+
+            <div class="limitations hidden" id="limitationsBox"></div>
+          </section>
+
+          <section class="recent-section">
+            <div class="section-heading"><div><p class="eyebrow">This session</p><h2>Recent scans</h2></div><button class="text-button" id="refreshHistoryButton" type="button">Refresh</button></div>
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead><tr><th>File</th><th>QRs</th><th>Verdict</th><th>Risk</th><th>Time</th></tr></thead>
+                <tbody id="historyBody"><tr><td colspan="5" class="empty-cell">No scans in this server session yet.</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="view" id="view-url" aria-labelledby="urlHeading">
+          <p class="eyebrow">MANUAL URL CHECK</p>
+          <h1 id="urlHeading">Analyze a destination without opening it.</h1>
+          <p class="lead">Paste the decoded URL and, optionally, the message or document text surrounding the QR. Context helps QuishLens detect brand mismatch, urgency, credential requests, and payment pressure.</p>
+          <form class="url-form panel" id="urlForm">
+            <label for="urlInput">URL or hostname</label>
+            <input id="urlInput" type="text" autocomplete="off" placeholder="https://example.com/account/verify" required />
+            <label for="contextInput">Nearby message/document text <span class="muted">(optional)</span></label>
+            <textarea id="contextInput" rows="7" placeholder="Paste the text printed near the QR code…"></textarea>
+            <div class="form-row"><button class="primary-button" type="submit">Analyze URL</button><span class="muted">No request is sent to that destination.</span></div>
+          </form>
+          <div id="urlResult" class="hidden"></div>
+        </section>
+
+        <section class="view" id="view-benchmark" aria-labelledby="benchmarkHeading">
+          <p class="eyebrow">EVALUATION</p>
+          <h1 id="benchmarkHeading">Prove the detector instead of trusting a demo.</h1>
+          <p class="lead">Training and evaluation scripts live in <code>scripts/</code>. They accept external datasets through explicit column mappings, keep benchmark results separate from training, and write a summary that this page can display.</p>
+
+          <div class="metric-strip" id="benchmarkMetrics">
+            <div><span>Dataset</span><strong>Not run</strong></div><div><span>Samples</span><strong>—</strong></div><div><span>Recall</span><strong>—</strong></div><div><span>F1</span><strong>—</strong></div>
+          </div>
+
+          <div class="result-grid benchmark-grid">
+            <article class="panel">
+              <h3>Recommended benchmark layers</h3>
+              <ol class="steps-list">
+                <li><span>1</span><div><strong>Internal URL test</strong><p>Train/validation/test split from your development dataset.</p></div></li>
+                <li><span>2</span><div><strong>Independent URL corpus</strong><p>Evaluate without retraining to measure generalization.</p></div></li>
+                <li><span>3</span><div><strong>QR manifest benchmark</strong><p>Measure both decode rate and phishing classification.</p></div></li>
+                <li><span>4</span><div><strong>Adversarial transformations</strong><p>Rotation, blur, compression, resizing, noise and PDF embedding.</p></div></li>
+              </ol>
+            </article>
+            <article class="panel command-panel">
+              <h3>Dataset adapter examples</h3>
+              <p>The scripts do not hard-code a single dataset schema.</p>
+              <pre><code>python scripts/train_url_model.py \
+  --csv data/train.csv \
+  --url-column url \
+  --label-column label
+
+python scripts/evaluate_url_dataset.py \
+  --csv data/external.csv \
+  --url-column URL \
+  --label-column status \
+  --positive-label phishing</code></pre>
+            </article>
+          </div>
+
+          <article class="panel" id="benchmarkDetailPanel">
+            <div class="panel-title"><h3>Latest benchmark summary</h3><button class="text-button" id="refreshBenchmarkButton" type="button">Reload</button></div>
+            <div id="benchmarkDetail" class="empty-state">Run an evaluation script to populate <code>results/benchmark_summary.json</code>.</div>
+          </article>
+        </section>
+
+        <section class="view" id="view-method" aria-labelledby="methodHeading">
+          <p class="eyebrow">METHOD</p>
+          <h1 id="methodHeading">One verdict, multiple independent signals.</h1>
+          <p class="lead">A QR code is only a transport. QuishLens separates extraction, URL analysis, document-language analysis, ML, and threat intelligence so each part can be tested or replaced independently.</p>
+
+          <div class="pipeline">
+            <div class="pipeline-node"><span>01</span><strong>File ingestion</strong><small>Image · PDF · URL</small></div><b>→</b>
+            <div class="pipeline-node"><span>02</span><strong>QR extraction</strong><small>OpenCV + PDF rendering</small></div><b>→</b>
+            <div class="pipeline-node"><span>03</span><strong>Security signals</strong><small>URL · brand · NLP · intel</small></div><b>→</b>
+            <div class="pipeline-node"><span>04</span><strong>Risk engine</strong><small>Deterministic score</small></div><b>→</b>
+            <div class="pipeline-node"><span>05</span><strong>Explanation</strong><small>Technical + plain language</small></div>
+          </div>
+
+          <div class="method-grid">
+            <article class="panel"><h3>QR & document analysis</h3><p>Images are decoded locally with OpenCV. PDFs are rasterized page-by-page so vector or embedded QR artwork can still be discovered, while extractable text supplies contextual evidence.</p></article>
+            <article class="panel"><h3>URL intelligence</h3><p>QuishLens measures structural and lexical features such as URL length, subdomain depth, entropy, IP destinations, punycode, shorteners, encoding, and security-sensitive terms.</p></article>
+            <article class="panel"><h3>NLP/context layer</h3><p>Nearby document language is checked for urgency, credential requests, payment pressure, fear cues, QR calls-to-action and named brands. These signals support—but never independently decide—the verdict.</p></article>
+            <article class="panel"><h3>Model & fallback</h3><p>A trained scikit-learn model is loaded when available. Without it, a transparent heuristic fallback keeps the prototype operational and clearly labels the source of its score.</p></article>
+            <article class="panel"><h3>Threat intelligence</h3><p>Known malicious URLs/domains can be loaded as local snapshots. The production-style workflow avoids browsing suspicious destinations during analysis.</p></article>
+            <article class="panel"><h3>Accessible output</h3><p>Technical evidence is available for security users, while plain-language guidance avoids jargon and gives concrete next steps suitable for less technical adults or young users.</p></article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <dialog class="modal" id="evidenceModal">
+    <form method="dialog" class="modal-card">
+      <div class="modal-head"><div><p class="eyebrow">FULL EVIDENCE</p><h2>Why QuishLens made this decision</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div id="modalEvidenceList" class="evidence-list expanded"></div>
+      <button class="primary-button modal-close" value="cancel">Close</button>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="healthModal">
+    <form method="dialog" class="modal-card small-modal">
+      <div class="modal-head"><div><p class="eyebrow">RUNTIME STATUS</p><h2>Scanner health</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div id="healthDetails" class="health-details">Loading…</div>
+      <button class="primary-button modal-close" value="cancel">Close</button>
+    </form>
+  </dialog>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
