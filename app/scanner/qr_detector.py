@@ -6,6 +6,12 @@ from typing import Iterable
 import cv2
 import numpy as np
 
+try:
+    from pyzbar.pyzbar import ZBarSymbol, decode as zbar_decode
+except Exception:  # Optional fallback; OpenCV remains the baseline decoder.
+    ZBarSymbol = None
+    zbar_decode = None
+
 # Creating QRCodeDetector is cheap, but doing it for every transformed image adds
 # measurable overhead in dataset runs. One detector per worker process is enough.
 _DETECTOR = cv2.QRCodeDetector()
@@ -55,6 +61,31 @@ def _decode_once(image: np.ndarray, method: str) -> list[DecodedQR]:
     return found
 
 
+
+
+def _decode_with_zbar(image: np.ndarray, method: str) -> list[DecodedQR]:
+    """Fallback decoder restricted to QR symbols only (never 1D barcodes)."""
+    if zbar_decode is None or ZBarSymbol is None:
+        return []
+    found: list[DecodedQR] = []
+    try:
+        for item in zbar_decode(image, symbols=[ZBarSymbol.QRCODE]):
+            payload = item.data.decode("utf-8", errors="replace").strip()
+            if not payload:
+                continue
+            rect = item.rect
+            bbox = [
+                [float(rect.left), float(rect.top)],
+                [float(rect.left + rect.width), float(rect.top)],
+                [float(rect.left + rect.width), float(rect.top + rect.height)],
+                [float(rect.left), float(rect.top + rect.height)],
+            ]
+            found.append(DecodedQR(payload, bbox, f"{method}:zbar-qr"))
+    except Exception:
+        return []
+    return found
+
+
 def _bounded(image: np.ndarray) -> np.ndarray:
     """Keep very large screenshots from turning every fallback into a huge image."""
     height, width = image.shape[:2]
@@ -92,8 +123,23 @@ def decode_qr_from_image(image: np.ndarray) -> list[DecodedQR]:
     seen: set[str] = set()
     results: list[DecodedQR] = []
 
-    for method, variant in _variants(image):
-        for item in _decode_once(variant, method):
+    bounded = _bounded(image)
+
+    # ZBar is very fast on clean, ordinary QR images and is restricted above to
+    # QRCODE symbols only. Trying it first makes large dataset runs much faster.
+    for item in _decode_with_zbar(bounded, "original"):
+        if item.payload not in seen:
+            seen.add(item.payload)
+            results.append(item)
+    if results:
+        return results
+
+    # OpenCV then gets the harder cases plus preprocessing/rotation fallbacks.
+    for method, variant in _variants(bounded):
+        decoded = _decode_once(variant, method)
+        if not decoded and method != "original":
+            decoded = _decode_with_zbar(variant, method)
+        for item in decoded:
             if item.payload in seen:
                 continue
             seen.add(item.payload)

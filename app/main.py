@@ -14,6 +14,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.config import (
     ALLOWED_EXTENSIONS,
+    DATA_DIR,
     BENCHMARK_SUMMARY_PATH,
     MAX_UPLOAD_BYTES,
     SCAN_HISTORY_LIMIT,
@@ -25,8 +26,8 @@ from app.service import QuishLensService
 
 app = FastAPI(
     title="QuishLens",
-    version="1.1.0",
-    description="Pre-click QR phishing analysis for images, PDFs, and URLs.",
+    version="1.3.0",
+    description="QR payload inspection, payment parsing, and pre-click phishing analysis for images, PDFs, and URLs.",
 )
 app.add_middleware(
     CORSMiddleware,
@@ -56,6 +57,8 @@ def health():
         bootstrap_model=bool(service.model.metadata.get("bootstrap_only", False)),
         threat_intel_urls=len(service.threat_intel.urls),
         threat_intel_domains=len(service.threat_intel.domains),
+        payment_model_loaded=service.payment_model.loaded,
+        payment_model_name=service.payment_model.metadata.get("model") if service.payment_model.loaded else None,
     )
 
 
@@ -107,6 +110,19 @@ async def scan(file: UploadFile = File(...)):
     return response
 
 
+@app.get("/api/demo/{demo_name}", include_in_schema=False)
+def demo_file(demo_name: str):
+    allowed = {
+        "benign_qr": DATA_DIR / "demo" / "benign_qr.png",
+        "suspicious_qr": DATA_DIR / "demo" / "suspicious_qr.png",
+        "suspicious_pdf": DATA_DIR / "demo" / "suspicious_notice.pdf",
+    }
+    path = allowed.get(demo_name)
+    if path is None or not path.exists():
+        raise HTTPException(status_code=404, detail="Demo file not found.")
+    return FileResponse(path)
+
+
 @app.get("/api/history")
 def get_history():
     return {"items": list(history)}
@@ -133,4 +149,5 @@ def reload_assets():
         "model_loaded": service.model.loaded,
         "threat_intel_urls": len(service.threat_intel.urls),
         "threat_intel_domains": len(service.threat_intel.domains),
+        "payment_model_loaded": service.payment_model.loaded,
     }

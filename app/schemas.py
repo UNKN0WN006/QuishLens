@@ -30,6 +30,8 @@ class ScanResponse(BaseModel):
     qr_count: int = 0
     artifacts: list[QRArtifact] = Field(default_factory=list)
     selected_payload: str | None = None
+    payload_analysis: dict[str, Any] | None = None
+    artifact_analyses: list[dict[str, Any]] = Field(default_factory=list)
     extracted_text_preview: str | None = None
     url_analysis: dict[str, Any] | None = None
     context_analysis: dict[str, Any] | None = None
@@ -54,3 +56,5 @@ class HealthResponse(BaseModel):
     bootstrap_model: bool = False
     threat_intel_urls: int
     threat_intel_domains: int
+    payment_model_loaded: bool = False
+    payment_model_name: str | None = None

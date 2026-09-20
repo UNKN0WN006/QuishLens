@@ -10,3 +10,4 @@ joblib>=1.5,<2.0
 Pillow>=11,<13
 qrcode[pil]>=8,<9
 pytest>=8,<10
+pyzbar>=0.1.9,<1.0

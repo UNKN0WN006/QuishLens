@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from common import write_summary
+from scripts.common import write_summary
 from app.scanner.qr_detector import decode_qr_from_image
 
 

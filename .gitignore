@@ -1,10 +1,53 @@
+# Python
 __pycache__/
+*.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
 .venv/
+venv/
+env/
+
+# Local secrets / machine config
 .env
-*.pyc
-app/models/*.joblib
-app/models/*.json
+.env.*
+!.env.example
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# User uploads / scratch files
+uploads/
+tmp/
+temp/
+logs/
+*.log
+
+# Large research datasets should stay outside the repository
+datasets/
+data/datasets/
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Raw downloaded threat feeds
+# Keep the tiny safe demo/local snapshot files already in data/.
+data/threat_intel/raw/
+
+# Large benchmark scratch outputs
 results/*.csv
 results/*.png
-.DS_Store
+results/tmp/
+
+# NumPy training intermediates
+*.npy
+*.npz

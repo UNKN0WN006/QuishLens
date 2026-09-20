@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 
 import pandas as pd
 
-from common import ROOT
+from scripts.common import ROOT
 from app.analysis.url_features import normalize_url, registered_domain
 
 

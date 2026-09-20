@@ -7,7 +7,7 @@ from time import perf_counter
 
 import pandas as pd
 
-from common import coerce_binary_label, metrics_dict, write_summary
+from scripts.common import coerce_binary_label, metrics_dict, write_summary
 from app.scanner.file_scanner import scan_file
 from app.service import QuishLensService
 

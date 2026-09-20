@@ -1,0 +1,153 @@
+{
+  "dataset": "BanglaQR-Quish",
+  "samples": 400,
+  "decode_rate": 1.0,
+  "payment_payload_recognition_rate": 1.0,
+  "metrics": {
+    "accuracy": 0.8975,
+    "precision": 0.9818181818181818,
+    "recall": 0.81,
+    "f1": 0.8876712328767123,
+    "confusion_matrix": [
+      [
+        197,
+        3
+      ],
+      [
+        38,
+        162
+      ]
+    ]
+  },
+  "attack_type_recall": {
+    "payment_redirection": 0.62,
+    "provider_gui_url_injection": 1.0
+  },
+  "attack_type_counts": {
+    "payment_redirection": 100,
+    "benign_valid": 200,
+    "provider_gui_url_injection": 100
+  },
+  "decode_failures": [],
+  "examples": {
+    "payment_redirection": [
+      {
+        "image": "BQR_MAL_024655",
+        "score": 8,
+        "verdict": "low",
+        "payment_model_probability": 0.2497,
+        "provider": "TallyPay",
+        "merchant": "DIGITAL SHOP",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      },
+      {
+        "image": "BQR_MAL_013558",
+        "score": 69,
+        "verdict": "high",
+        "payment_model_probability": 0.991,
+        "provider": "Mutual Trust Bank",
+        "merchant": "SARDER CLOTHING",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      },
+      {
+        "image": "BQR_MAL_013165",
+        "score": 65,
+        "verdict": "high",
+        "payment_model_probability": 0.9639,
+        "provider": "Mutual Trust Bank",
+        "merchant": "NEW DHAKA CLOTHING",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      }
+    ],
+    "benign_valid": [
+      {
+        "image": "BQR_BEN_005208",
+        "score": 8,
+        "verdict": "low",
+        "payment_model_probability": 0.1974,
+        "provider": "Nagad",
+        "merchant": "HOSSAIN CLOTHING",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      },
+      {
+        "image": "BQR_BEN_001869",
+        "score": 8,
+        "verdict": "low",
+        "payment_model_probability": 0.3261,
+        "provider": "TallyPay",
+        "merchant": "HOSSAIN SPECIALTY STORE",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      },
+      {
+        "image": "BQR_BEN_014966",
+        "score": 8,
+        "verdict": "low",
+        "payment_model_probability": 0.3809,
+        "provider": "Nagad",
+        "merchant": "JANATA COMPUTER",
+        "flags": [
+          "Payment QR checksum is valid",
+          "Payment destination needs human verification"
+        ]
+      }
+    ],
+    "provider_gui_url_injection": [
+      {
+        "image": "BQR_MAL_011912",
+        "score": 70,
+        "verdict": "high",
+        "payment_model_probability": 1.0,
+        "provider": "https://pay.example.test",
+        "merchant": "AL AMIN SPECIALTY STORE",
+        "flags": [
+          "Provider identifier replaced by a web address",
+          "Payment QR checksum is valid"
+        ]
+      },
+      {
+        "image": "BQR_MAL_012377",
+        "score": 70,
+        "verdict": "high",
+        "payment_model_probability": 1.0,
+        "provider": "https://pay.example.test",
+        "merchant": "GREEN MEDICINE CORNER",
+        "flags": [
+          "Provider identifier replaced by a web address",
+          "Payment QR checksum is valid"
+        ]
+      },
+      {
+        "image": "BQR_MAL_001283",
+        "score": 70,
+        "verdict": "high",
+        "payment_model_probability": 0.9965,
+        "provider": "https://id.example.test",
+        "merchant": "MODERN SHOP",
+        "flags": [
+          "Provider identifier replaced by a web address",
+          "Payment QR checksum is valid"
+        ]
+      }
+    ]
+  },
+  "payment_model_loaded": true,
+  "excluded_payment_model_training_images": 900,
+  "important_note": "Provider URL injection is detectable from payload semantics. If the optional BanglaQR-trained payment anomaly model is loaded, it can also flag synthetic payment-redirection patterns. Its score is supporting evidence only and should not be generalized to real payment ecosystems without independent validation.",
+  "development_only": true,
+  "claim_warning": "This is a small development sanity check on 400 samples after excluding the 900 images used to fit the optional payment model. It is not the final competition benchmark."
+}

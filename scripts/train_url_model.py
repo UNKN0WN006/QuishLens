@@ -11,7 +11,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-from common import ROOT, coerce_binary_label, metrics_dict, write_summary
+from scripts.common import ROOT, coerce_binary_label, metrics_dict, write_summary
 from app.analysis.url_features import MODEL_FEATURES, extract_url_features, model_vector
 from app.config import MODEL_META_PATH, MODEL_PATH
 

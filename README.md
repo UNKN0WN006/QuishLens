@@ -1,124 +1,291 @@
 # QuishLens
 
-**Multimodal pre-click QR phishing analysis for images, screenshots, PDFs, and URLs.**
+**Tiny square. Big trust problem.**
 
-QuishLens is a cybersecurity prototype designed for people who receive QR codes in email, documents, posters, screenshots, payment messages, or account notices and want to inspect the destination **before opening it**. It combines QR extraction, static URL analysis, optional machine-learning classification, brand/domain mismatch checks, local threat intelligence, document-text/NLP signals, deterministic risk scoring, and two levels of explanation: a technical evidence view and a plain-language view.
+QR codes are wonderfully convenient and slightly ridiculous: a box of black squares can quietly contain a website, a payment instruction, Wi-Fi credentials, a phone number, an authenticator secret, or just plain text — and most people only find out *after* their phone decides what to do with it.
 
-> QuishLens does not intentionally navigate to decoded destinations. Treat all threat feeds and malicious samples as untrusted research data.
+QuishLens exists for the little moment before that.
 
-## Why this project exists
+It reads QR codes from images, screenshots, and PDFs, explains what the QR actually contains, and then applies the right safety checks for that payload. A website QR is analysed like a website. A payment QR is parsed like a payment QR. Wi-Fi credentials are treated like credentials. A QR that just contains text is shown as text instead of being forced through a phishing-URL classifier wearing a fake moustache.
 
-A QR code hides a destination from the eye. A user can see a familiar logo or a message saying “verify your account,” but cannot easily inspect the URL encoded inside the QR. QuishLens turns that hidden destination into explicit, testable evidence.
+> QuishLens performs static inspection and does not intentionally browse to decoded destinations.
 
-The project is deliberately **not** an “ask an AI if this is phishing” wrapper. The final risk score is deterministic and based on inspectable signals. Machine learning is one input, not the authority.
+## The fun-sized version
 
-## What is implemented
+1. Drop in a QR image, screenshot, or PDF.
+2. QuishLens decodes **QR symbols only** — ordinary 1D barcodes are ignored.
+3. It identifies what the QR contains.
+4. The relevant security checks run.
+5. You get a human-readable explanation before you click, pay, join, call, send, or save anything.
 
-- Drag-and-drop web UI for PNG, JPG, WEBP, BMP, and PDF
-- QR detection/decoding with OpenCV and several image fallbacks
-- PDF page rendering and text extraction with PyMuPDF
-- Static URL feature extraction (22 model features + descriptive fields)
-- Random Forest model support via `joblib`
-- Transparent heuristic fallback when no trained model is installed
-- Brand/domain mismatch and lookalike detection for common global and Indian brands
-- Local threat-intelligence URL/domain snapshots
-- Lightweight NLP/context analysis for urgency, credentials, payment pressure, threats, QR calls-to-action, and brand mentions
-- Deterministic 0–100 risk engine with evidence contributions
-- Plain-language mode for non-technical adults/young users
-- Evidence popup/modal, health popup, session scan history, responsive UI
-- Generic model-training script for arbitrary CSV URL/label columns
-- Independent URL benchmark adapter
-- QR image-manifest benchmark adapter
-- PDF/image document-manifest benchmark adapter
-- Adversarial QR transformations (rotation, blur, JPEG compression, scaling, contrast, noise)
-- Threat-feed importer
-- Safe local demo QR images/PDF using reserved `.invalid` domains
-- Automated tests
+There is also a direct **Check a link** mode when the QR has already been decoded somewhere else.
 
-## Run locally
+## What it understands now
 
-Python 3.11+ is recommended.
+QuishLens does not assume every QR is a URL. It recognises and explains:
+
+- HTTP/HTTPS links
+- EMV-style merchant payment QR payloads
+- UPI payment links
+- Wi-Fi configuration QR codes
+- vCard/contact QR codes
+- email actions
+- SMS actions
+- telephone numbers
+- geographic coordinates
+- OTP/authenticator setup secrets
+- plain text and custom/application payloads
+
+For links, it can also expose URLs embedded inside common redirect parameters **without following the redirect over the network**.
+
+## QR decoding: more stubborn than before
+
+The first version relied mostly on OpenCV. That worked nicely on many QR codes, but not all perfectly valid ones.
+
+The current scanner uses two decoders:
+
+1. **ZBar/pyzbar, restricted to `QRCODE` symbols only**, for fast decoding of clean QR images.
+2. **OpenCV QRCodeDetector** plus grayscale, upscaling, Otsu thresholding, and rotation fallbacks for harder images.
+
+This matters in real datasets. On a 200-image random development sample from the supplied BanglaQR-Quish archive, OpenCV alone decoded 185/200 images while the QR-only ZBar path decoded all 200. That is a decoder engineering check, not a phishing-accuracy claim.
+
+## Payment QR analysis
+
+This is one of the biggest changes.
+
+If a QR contains an EMV-style payment payload, QuishLens parses its tag-length-value structure and can expose useful fields such as:
+
+- merchant name
+- merchant city
+- country
+- currency
+- requested amount, if fixed
+- merchant category code
+- payment provider identifier
+- account-template structure
+- checksum/CRC validity
+
+It also looks for unusual things such as a **web address replacing a payment-provider identifier**.
+
+A valid checksum does **not** prove that the receiver is trustworthy. It only proves that the structured payload is internally consistent. QuishLens says that explicitly instead of treating “valid QR” as “safe QR”.
+
+## BanglaQR-Quish support
+
+The repository now includes tooling specifically for the provided **BanglaQR-Quish** research dataset. The dataset contains 50,000 synthetic payment QR images split evenly between benign and malicious samples, including:
+
+- provider GUI/URL injection
+- payment redirection
+
+The evaluator can read the outer dataset ZIP and the nested `benign.zip` / `malicious.zip` files directly, so it does **not** need to explode 50,000 PNG files onto disk.
 
 ```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-source .venv/bin/activate
-pip install -r requirements.txt
-python scripts/generate_demo_samples.py
-python scripts/bootstrap_demo_model.py
-./run.sh
+python scripts/evaluate_banglaqr_zip.py \
+  "/path/to/BanglaQR-Quish A Balanced Synthetic QR Image Datas.zip" \
+  --limit-per-class 1000
 ```
 
-On Windows, run:
+It reports:
 
-```powershell
-python -m uvicorn app.main:app --reload --port 8000
-```
+- QR decode rate
+- payment-payload recognition rate
+- accuracy / precision / recall / F1
+- confusion matrix
+- recall by attack type
+- sample explanations
 
-Open `http://127.0.0.1:8000`.
+### Optional payment-QR anomaly model
 
-The built-in bootstrap model is **only for demonstrating the ML integration**. Train on a real, documented phishing dataset before quoting model performance in a submission.
+The current repository also includes a small research model trained from a development sample of BanglaQR-Quish. It uses structural payment-payload features such as provider-identifier shape, account-field structure, entropy, repeated-character runs, payload length, checksum state, and embedded URL indicators.
 
-## One-command Docker option
+It deliberately does **not** use image filenames, dataset labels as features, or exact hard-coded attacker strings.
+
+The included model metadata marks it as **research-only**. Its internal hold-out numbers describe this synthetic dataset only; they are not evidence that it generalises to every real bKash/Nagad/merchant QR in the world.
+
+Retrain it yourself with:
 
 ```bash
-docker build -t quishlens .
-docker run --rm -p 8000:8000 quishlens
+python scripts/train_banglaqr_payment_model.py \
+  "/path/to/BanglaQR-Quish A Balanced Synthetic QR Image Datas.zip" \
+  --per-attack 1000
 ```
+
+## Website/link analysis
+
+For normal web links, QuishLens combines:
+
+- lexical URL features
+- registered-domain approximation
+- IP-address detection
+- punycode indicators
+- URL-shortener detection
+- suspicious token analysis
+- subdomain depth
+- entropy and length signals
+- brand/domain mismatch checks
+- local threat-intelligence matches
+- optional Random Forest URL classifier
+- nearby document/social-engineering context
+
+The final risk score is deterministic and inspectable. The ML model contributes evidence; it is not allowed to magically declare something evil with no explanation.
+
+## Simple view actually changes the app now
+
+The site starts in **Simple view** because the intended audience includes ordinary adults and younger users, not only security people.
+
+Simple view hides:
+
+- classifier percentages
+- raw evidence lists
+- benchmark tooling
+- implementation/method pages
+- raw PDF/context internals
+- model/runtime details
+
+It keeps:
+
+- what the QR contains
+- merchant/payee information
+- risk level
+- plain-language explanation
+- practical next steps
+
+Switch to **Detailed view** and all the technical evidence appears again.
+
+## Frontend direction
+
+The frontend was intentionally moved away from the very common “AI dashboard” look.
+
+There is no purple/blue AI gradient, chatbot panel, glowing orb, or fake futuristic HUD. The current interface uses a muted forensic/safety palette, centred product heading, horizontal navigation, translucent glass panels, and a small opening animation that shows the actual product idea:
+
+```text
+QR  ->  decoded content  ->  explanation
+```
+
+When the site opens, it immediately asks whether you want to inspect:
+
+- a QR/image/PDF
+- an already-decoded link
+
+The animation is CSS/HTML, not an external stock GIF, so the UI stays lightweight and self-contained.
 
 ## Architecture
 
 ```text
-Image / screenshot ─┐
-PDF ────────────────┼─> QR extraction ─> decoded payload ─┐
-Direct URL ─────────┘                                     │
-                                                          ├─> URL feature engine
-PDF text ─────────────────────────────────────────────────┼─> context/NLP signals
-                                                          ├─> brand/domain checks
-Local threat feed ────────────────────────────────────────┼─> threat-intel match
-Optional RF model ────────────────────────────────────────┘
-                                                                   │
-                                                           deterministic risk engine
-                                                                   │
-                                                       technical + plain explanation
+                    IMAGE / SCREENSHOT / PDF
+                               │
+                               ▼
+                       QR-only decoding
+                    ZBar QR -> OpenCV fallback
+                               │
+                               ▼
+                        Payload classifier
+                               │
+          ┌────────────────────┼─────────────────────┐
+          │                    │                     │
+          ▼                    ▼                     ▼
+       Web URL              Payment QR          Other payload
+          │                    │              Wi-Fi / contact /
+          │                    │              SMS / OTP / text
+          ▼                    ▼                     │
+ URL / brand / ML      TLV + CRC + provider          │
+ threat-intel checks   + payment anomaly model       │
+          │                    │                     │
+          └────────────────────┴─────────────────────┘
+                               │
+                               ▼
+                       explainable risk
+                               │
+                       simple / detailed UI
 ```
 
-## Main source layout
+## Main source map
 
 ```text
 app/
-  main.py                 FastAPI routes + static frontend
-  service.py              analysis orchestration
+  main.py                       FastAPI routes and web app
+  service.py                    analysis orchestration
+  schemas.py                    API response models
+  config.py                     paths and safety limits
+
   scanner/
-    qr_detector.py         OpenCV QR extraction
-    pdf_scanner.py         PDF rendering/text extraction
-    file_scanner.py        file dispatch
+    qr_detector.py              QR-only decoding + fallbacks
+    pdf_scanner.py              embedded-image and rendered-page scanning
+    file_scanner.py             file dispatch
+
   analysis/
-    url_features.py        model + descriptive URL features
-    brand_detector.py      brand/domain mismatch
-    context_nlp.py         lightweight document-language analysis
-    threat_intel.py        local feed lookup
-    model_service.py       trained model / heuristic fallback
-    risk_engine.py         deterministic score
-    explain.py             evidence-grounded explanations
+    qr_payload.py               QR payload classification + EMV/UPI parsing
+    payment_features.py         payment-model feature extraction
+    payment_model.py            optional payment QR anomaly model
+    url_features.py             URL feature extraction
+    model_service.py            URL model + transparent fallback
+    brand_detector.py           brand/domain mismatch detection
+    threat_intel.py             local threat snapshot lookup
+    context_nlp.py              lightweight social-engineering language analysis
+    risk_engine.py              URL risk contributions
+    explain.py                  grounded explanations
+
   static/
-    index.html
-    styles.css
-    app.js
+    index.html                  interface structure
+    styles.css                  custom glass/safety visual system
+    app.js                      interactions, modes, dialogs, rendering
+
 scripts/
   train_url_model.py
   evaluate_url_dataset.py
   evaluate_qr_manifest.py
   evaluate_pdf_manifest.py
+  evaluate_banglaqr_zip.py
+  train_banglaqr_payment_model.py
   adversarial_qr_test.py
   import_threat_feed.py
   generate_demo_samples.py
   bootstrap_demo_model.py
 ```
 
-## Train on a real URL dataset
+## Run locally
 
-The training adapter does not assume a fixed schema.
+Python 3.11+ is recommended.
+
+### Windows
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+Or simply use:
+
+```text
+run.bat
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+### Linux / macOS
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+./run.sh
+```
+
+## Docker
+
+The Docker image installs `libzbar0` because the secondary QR decoder requires the ZBar runtime.
+
+```bash
+docker build -t quishlens .
+docker run --rm -p 8000:8000 quishlens
+```
+
+## Train a URL model
 
 ```bash
 python scripts/train_url_model.py \
@@ -128,62 +295,31 @@ python scripts/train_url_model.py \
   --positive-label phishing
 ```
 
-If labels are already `0/1`, omit `--positive-label`.
+The app automatically falls back to transparent URL heuristics if no model is available.
 
-The model is written to:
+## Generic QR benchmark
 
-```text
-app/models/url_classifier.joblib
-app/models/url_classifier.meta.json
-```
-
-Restart QuishLens or call `POST /api/reload`.
-
-## Independent URL evaluation
-
-**Do not retrain on the external benchmark.**
-
-```bash
-python scripts/evaluate_url_dataset.py \
-  --csv /path/to/PhiUSIIL.csv \
-  --url-column URL \
-  --label-column label \
-  --positive-label phishing \
-  --name PhiUSIIL
-```
-
-The evaluator writes per-sample predictions and updates `results/benchmark_summary.json`, which the UI's **Benchmarks** page reads.
-
-Reported metrics include accuracy, precision, recall, F1, ROC-AUC, false-positive rate, false-negative rate, average latency, and p95 latency.
-
-## QR dataset evaluation
-
-Create a manifest such as:
+For other QR datasets, create a manifest:
 
 ```csv
 path,label
 benign/0001.png,0
 benign/0002.png,0
 phishing/0001.png,1
-phishing/0002.png,1
 ```
 
-Run:
+Then run:
 
 ```bash
 python scripts/evaluate_qr_manifest.py \
   --manifest /dataset/manifest.csv \
   --root /dataset \
-  --path-column path \
-  --label-column label \
-  --name CIC-Trap4Phish-QR
+  --name My-QR-Benchmark
 ```
 
-This intentionally reports **QR decode rate separately from phishing classification metrics**. A detector cannot classify a QR payload it failed to decode, and hiding that distinction would inflate the apparent quality of the system.
+QuishLens reports decoding separately from classification so a failed decoder cannot quietly disappear from the accuracy number.
 
-## PDF/document benchmark
-
-Manifest format is the same (`path,label`).
+## PDF benchmark
 
 ```bash
 python scripts/evaluate_pdf_manifest.py \
@@ -192,120 +328,41 @@ python scripts/evaluate_pdf_manifest.py \
   --name CIC-Trap4Phish-PDF
 ```
 
-This reports classification metrics, rate of documents containing decoded QR codes, and processing-failure rate. For general parser corpora such as SafeDocs/UNSAFE-DOCS, use the processing-failure statistic rather than pretending those datasets have phishing ground truth.
-
 ## Adversarial QR robustness
 
 ```bash
 python scripts/adversarial_qr_test.py --image data/demo/suspicious_qr.png
 ```
 
-Current transformations:
+Current transformations include rotation, blur, resizing, JPEG compression, low contrast, and image noise.
 
-- original
-- rotation 15° / 45°
-- Gaussian blur
-- 50% downscale/upscale
-- JPEG quality 35
-- low contrast
-- additive image noise
+## Important limitation that I do not want to hide
 
-The result measures **decode robustness**, not maliciousness.
+A payment QR can be perfectly structured, have a valid checksum, contain a legitimate provider identifier, and still point to the wrong receiving account.
 
-## Load a downloaded threat feed
+That means “parse the QR” and “prove the payee is honest” are not the same problem.
 
-QuishLens never needs to visit a malicious URL to use a threat feed.
+QuishLens currently tackles that in three ways:
 
-One URL per line:
+1. show the actual payment fields so the person can verify them;
+2. compare surrounding document context when available;
+3. optionally use a payment-anomaly research model as supporting evidence.
 
-```bash
-python scripts/import_threat_feed.py --input downloaded_feed.txt
-```
+A stronger future version would add a trusted-payee baseline or bank/provider verification source rather than pretending this limitation does not exist.
 
-CSV:
+## Safety
 
-```bash
-python scripts/import_threat_feed.py \
-  --input phishtank.csv \
-  --url-column url
-```
+- decoded URLs are analysed as strings;
+- QuishLens does not intentionally navigate to suspicious destinations;
+- threat feeds should stay local and should not be committed to a public repository;
+- QR authenticator secrets are not displayed in the friendly structured view;
+- Wi-Fi passwords are hidden in the structured view;
+- raw decoded content is available only in Detailed view because sometimes forensic work really does need the ugly bits.
 
-Then restart or `POST /api/reload`.
+## AI/tool disclosure
 
-**Do not commit live malicious URLs into a public repository.** Keep feeds local and cite the provider in your methodology.
+The project uses machine-learning components for phishing/anomaly classification and may be developed with AI-assisted coding/debugging tools. The actual runtime architecture does not depend on an LLM making the final safety decision. Significant AI/tool assistance should be disclosed wherever the competition rules require it.
 
-## Recommended evaluation matrix
+---
 
-Keep datasets separate by what they actually test:
-
-| Family | What QuishLens should measure |
-|---|---|
-| CIC-Trap4Phish QR | QR decode rate + phishing classification |
-| Trad/Chehab QR | Cross-dataset QR structural/decode generalization |
-| BanglaQR-Quish | Payment-QR generalization |
-| PhiUSIIL | Independent URL classification |
-| ISCX-URL2016 | Phishing vs broader malicious URL behavior |
-| PhishTank/OpenPhish snapshot | Fresh phishing recall |
-| Tranco | False positives on popular legitimate domains |
-| CIC-Trap4Phish PDF | Quishing attachment detection |
-| CIC-Evasive-PDFMal2022 | PDF parser/feature robustness (not necessarily quishing) |
-| SafeDocs | Ordinary PDF processing robustness |
-| UNSAFE-DOCS | Malformed/adversarial PDF processing robustness |
-| NIST CFReDS / Digital Corpora | Future forensic artifact recovery, reported separately |
-
-## Risk score
-
-The runtime score combines:
-
-- URL classifier: up to 35
-- threat-intelligence match: 30
-- brand/domain mismatch: 15
-- structural URL warnings: supporting points
-- social-engineering context: supporting points
-
-Thresholds:
-
-```text
-0–29   LOW
-30–59  SUSPICIOUS
-60–79  HIGH
-80–100 CRITICAL
-```
-
-These are prototype policy thresholds, **not calibrated probabilities**. Tune them using validation data and document any changes.
-
-## Child/adult-friendly behavior
-
-Plain-language mode intentionally avoids jargon. High-risk guidance says not to enter passwords/OTPs or send money, and suggests opening the organisation's official app/site independently. It does not claim that a low-risk result guarantees safety.
-
-For a public deployment, add a real privacy policy, retention controls, server-side malware sandboxing for hostile documents, content-security headers, rate limiting, audit logging, and a reviewed accessibility pass.
-
-## Safety and limitations
-
-- Static analysis reduces exposure but cannot prove a site is harmless.
-- The lightweight registered-domain function is not a full Public Suffix List implementation. Swap in a PSL library for production.
-- Brand rules are intentionally small and auditable; they are not an exhaustive brand database.
-- PDF files can be hostile. A production scanner should process them in a hardened sandbox/container with strict resource limits.
-- URL classifier performance depends entirely on training data quality and drift.
-- No benchmark result should be quoted unless the exact dataset, sample selection, split, model version, and threshold are recorded.
-- Threat-intelligence absence is not evidence of safety.
-- Do not fetch or execute malicious payloads while benchmarking.
-
-## Demo flow
-
-1. Generate samples: `python scripts/generate_demo_samples.py`
-2. Open QuishLens.
-3. Upload `data/demo/suspicious_notice.pdf`.
-4. Show QR extraction + decoded `.invalid` URL + brand mismatch + contextual urgency + local demo threat-intel match.
-5. Upload `data/demo/benign_qr.png`.
-6. Show the lower-risk control.
-7. Open Benchmarks and show metrics from a real external evaluation.
-8. Run the adversarial script and discuss where QR decoding fails.
-
-## Tests
-
-```bash
-pytest -q
-```
-
-The test suite covers URL features, brand mismatch, context signals, deterministic risk scoring, and QR round-trip decoding.
+**Read the square. Understand the square. Then decide whether the square deserves your trust.**

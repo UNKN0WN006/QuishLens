@@ -1,0 +1,31 @@
+{
+  "model": "RandomForestClassifier (bootstrap demo)",
+  "feature_names": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "dot_count",
+    "hyphen_count",
+    "underscore_count",
+    "digit_count",
+    "special_count",
+    "subdomain_count",
+    "query_param_count",
+    "encoded_sequence_count",
+    "hostname_entropy",
+    "url_entropy",
+    "uses_https",
+    "uses_ip_address",
+    "contains_at_symbol",
+    "contains_punycode",
+    "uses_shortener",
+    "double_slash_in_path",
+    "has_port",
+    "suspicious_token_count"
+  ],
+  "training_source": "procedurally generated SAFE demo corpus \u2014 replace for competition benchmark",
+  "rows": 2400,
+  "bootstrap_only": true,
+  "demo_f1": 1.0
+}

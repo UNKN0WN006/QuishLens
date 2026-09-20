@@ -20,6 +20,8 @@ ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | ALLOWED_DOCUMENT_EXTENSIONS
 
 MODEL_PATH = MODEL_DIR / "url_classifier.joblib"
 MODEL_META_PATH = MODEL_DIR / "url_classifier.meta.json"
+PAYMENT_MODEL_PATH = MODEL_DIR / "payment_qr_classifier.joblib"
+PAYMENT_MODEL_META_PATH = MODEL_DIR / "payment_qr_classifier.meta.json"
 THREAT_URLS_PATH = DATA_DIR / "threat_intel" / "known_urls.txt"
 THREAT_DOMAINS_PATH = DATA_DIR / "threat_intel" / "known_domains.txt"
 BENCHMARK_SUMMARY_PATH = RESULTS_DIR / "benchmark_summary.json"

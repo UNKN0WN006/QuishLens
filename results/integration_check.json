@@ -1,15 +1,17 @@
 {
-  "purpose": "Safe generated-sample integration check only — not a research benchmark",
+  "purpose": "Safe generated-sample integration check only \u2014 not a research benchmark",
   "verified": [
-    "FastAPI application imports and serves the frontend",
-    "Suspicious demo PDF decodes its QR and reaches the risk engine",
-    "Suspicious demo QR decodes its URL",
-    "Benign demo QR decodes its URL",
-    "URL analysis endpoint returns structured evidence",
-    "QR adversarial transformation script runs",
-    "QR manifest evaluator runs",
-    "Document manifest evaluator runs",
-    "Unit test suite passes"
+    "FastAPI application imports and serves the redesigned frontend",
+    "Simple view hides technical sections and Detailed view restores them",
+    "Opening dialog offers QR/file and direct-link workflows",
+    "QR-only ZBar decoder is used with OpenCV preprocessing fallbacks",
+    "BanglaQR-style EMV payment payloads are parsed into merchant/provider/currency/checksum fields",
+    "Provider URL injection is detected semantically",
+    "Optional BanglaQR payment anomaly model loads and contributes supporting evidence",
+    "UPI, Wi-Fi, contact, SMS, telephone, location, authenticator and plain-text payload types are recognised",
+    "Redirect-style URLs embedded in query parameters are exposed without network navigation",
+    "All 11 automated tests pass"
   ],
-  "warning": "Do not quote generated-sample accuracy as model performance. Use CIC-Trap4Phish, PhiUSIIL, or another documented independent corpus."
+  "warning": "Do not quote generated-sample accuracy as model performance. Use CIC-Trap4Phish, PhiUSIIL, or another documented independent corpus.",
+  "banglaqr_development_check": "See results/banglaqr_development_check.json; this small check excludes the 900 images used to fit the optional payment model and is not the final competition benchmark."
 }
