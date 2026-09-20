@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="QuishLens reads QR codes and explains what they contain before you act on them." />
   <title>QuishLens — Read the QR before it reads you</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="stylesheet" href="/static/styles.css?v=1.4.1" />
 </head>
 <body class="simple-mode">
   <header class="site-header">
@@ -131,7 +131,7 @@
       </section>
 
       <section class="history-section advanced-only">
-        <div class="section-heading"><div><p class="eyebrow">THIS SESSION</p><h2>Recent scans</h2></div><button class="text-button" id="refreshHistoryButton" type="button">refresh</button></div>
+        <div class="section-heading"><div><p class="eyebrow">THIS TAB ONLY</p><h2>Recent scans</h2></div><button class="text-button" id="refreshHistoryButton" type="button">refresh</button></div>
         <div class="table-wrap"><table><thead><tr><th>File</th><th>QRs</th><th>Verdict</th><th>Risk</th><th>Time</th></tr></thead><tbody id="historyBody"></tbody></table></div>
       </section>
     </section>
@@ -147,7 +147,7 @@
     </section>
 
     <section class="view advanced-only" id="view-benchmark" aria-labelledby="benchmarkHeading">
-      <div class="section-intro"><p class="eyebrow">MEASURE IT, DON'T GUESS</p><h1 id="benchmarkHeading">Benchmarks</h1><p>QuishLens keeps benchmark results separate from demo claims. External dataset results appear here only after an evaluation script writes them.</p></div>
+      <div class="section-intro"><p class="eyebrow">MEASURE IT, DON'T GUESS</p><h1 id="benchmarkHeading">Benchmarks</h1><p>QuishLens keeps measured results separate from demo claims. The current panel labels whether a result is a synthetic hold-out check or an independent external benchmark.</p></div>
       <div class="benchmark-cards" id="benchmarkMetrics"><div><span>Dataset</span><strong>—</strong></div><div><span>Samples</span><strong>—</strong></div><div><span>Recall</span><strong>—</strong></div><div><span>F1</span><strong>—</strong></div></div>
       <article class="glass-panel"><div class="panel-heading"><h3>Latest evaluation</h3><button class="text-button" id="refreshBenchmarkButton" type="button">refresh</button></div><div id="benchmarkDetail" class="muted">No benchmark loaded yet.</div></article>
     </section>
@@ -183,6 +183,6 @@
   <dialog class="modal" id="healthModal"><div class="modal-head"><div><p class="eyebrow">ENGINE STATUS</p><h2>Runtime</h2></div><button class="icon-button" type="button" data-close-dialog="healthModal">×</button></div><div id="healthDetails"></div></dialog>
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
-  <script src="/static/app.js" defer></script>
+  <script src="/static/app.js?v=1.4.1" defer></script>
 </body>
 </html>

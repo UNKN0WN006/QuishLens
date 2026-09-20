@@ -42,10 +42,13 @@ For links, it can also expose URLs embedded inside common redirect parameters **
 
 The first version relied mostly on OpenCV. That worked nicely on many QR codes, but not all perfectly valid ones.
 
-The current scanner uses two decoders:
+The current scanner uses three independent QR paths:
 
-1. **ZBar/pyzbar, restricted to `QRCODE` symbols only**, for fast decoding of clean QR images.
-2. **OpenCV QRCodeDetector** plus grayscale, upscaling, Otsu thresholding, and rotation fallbacks for harder images.
+1. **ZXing-C++**, restricted to QR format when the binding supports format selection, for stylised and difficult symbols.
+2. **ZBar/pyzbar, restricted to `QRCODE` symbols only**, for fast decoding of many clean QR images.
+3. **OpenCV QRCodeDetector** plus quiet-zone padding, grayscale, upscaling, thresholding, contrast, inversion, and rotation fallbacks.
+
+The Runtime panel reports which decoders are actually available on the current machine, so a missing native dependency is visible instead of silently weakening the scanner.
 
 This matters in real datasets. On a 200-image random development sample from the supplied BanglaQR-Quish archive, OpenCV alone decoded 185/200 images while the QR-only ZBar path decoded all 200. That is a decoder engineering check, not a phishing-accuracy claim.
 
@@ -357,7 +360,15 @@ A stronger future version would add a trusted-payee baseline or bank/provider ve
 - threat feeds should stay local and should not be committed to a public repository;
 - QR authenticator secrets are not displayed in the friendly structured view;
 - Wi-Fi passwords are hidden in the structured view;
-- raw decoded content is available only in Detailed view because sometimes forensic work really does need the ugly bits.
+- raw decoded content is available only in Detailed view because sometimes forensic work really does need the ugly bits;
+- uploaded file bytes are processed in memory and are not deliberately written to a server-side upload folder;
+- recent-scan history is browser-tab-only, so one visitor cannot read filenames from another visitor's scans.
+
+## Deployment
+
+The repository includes a Dockerfile for a small public demo deployment. The container installs the native ZBar runtime and starts FastAPI on the platform-provided `PORT`. QuishLens is still a hackathon prototype: public deployments should keep file-size/page limits in place and should not be described as a production malware gateway.
+
+After deployment, check `/api/health` or the Runtime panel before recording a demo. At least one QR decoder must be available; ideally ZXing-C++, ZBar, and OpenCV all report ready.
 
 ## AI/tool disclosure
 

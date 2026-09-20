@@ -18,7 +18,7 @@ def calculate_risk(url_features: dict, model: dict, brand: dict, threat: dict, c
         best = brand.get("best_match") or {}
         add("Brand mismatch", 15, f"Looks related to {best.get('brand', 'a known brand')} but uses a different registered domain.")
     if url_features.get("uses_ip_address"):
-        add("Direct IP destination", 7, "The URL uses a raw IP address instead of a normal domain name.")
+        add("Direct IP destination", 10, "The URL uses a raw IP address instead of a normal domain name.")
     if url_features.get("contains_punycode"):
         add("Punycode domain", 6, "The domain uses internationalized/punycode notation that can hide lookalike names.")
     if url_features.get("contains_at_symbol"):
@@ -28,6 +28,10 @@ def calculate_risk(url_features: dict, model: dict, brand: dict, threat: dict, c
     token_count = int(url_features.get("suspicious_token_count", 0))
     if token_count:
         add("Security-sensitive wording", min(7, token_count * 2), f"Found {token_count} suspicious URL token(s).")
+        if not url_features.get("uses_https"):
+            add("Sensitive action over HTTP", 7, "Security-sensitive wording appears on an unencrypted HTTP URL.")
+        if url_features.get("uses_ip_address"):
+            add("Credential-style path on raw IP", 5, "A raw IP address is combined with login, account, payment, or verification wording.")
     if int(url_features.get("subdomain_count", 0)) >= 3:
         add("Excessive subdomains", 4, "The hostname contains several nested subdomains.")
     context_score = int(context.get("manipulation_score", 0))

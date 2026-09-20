@@ -1,4 +1,28 @@
 {
-  "available": false,
-  "message": "No real external benchmark has been recorded yet. Run an evaluation script against a documented dataset before reporting competition metrics."
+  "available": true,
+  "dataset": "BanglaQR-Quish \u2014 held-out synthetic development check",
+  "samples": 400,
+  "decode_rate": 1.0,
+  "payment_payload_recognition_rate": 1.0,
+  "metrics": {
+    "accuracy": 0.8975,
+    "precision": 0.9818181818181818,
+    "recall": 0.81,
+    "f1": 0.8876712328767123,
+    "confusion_matrix": [
+      [
+        197,
+        3
+      ],
+      [
+        38,
+        162
+      ]
+    ]
+  },
+  "attack_type_recall": {
+    "payment_redirection": 0.62,
+    "provider_gui_url_injection": 1.0
+  },
+  "note": "400 samples from the same synthetic dataset family, excluding the 900 images recorded as payment-model training samples. Useful as a held-out development check, not evidence of real-world or cross-dataset generalization."
 }
