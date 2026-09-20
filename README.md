@@ -372,7 +372,13 @@ After deployment, check `/api/health` or the Runtime panel before recording a de
 
 ## AI/tool disclosure
 
-The project uses machine-learning components for phishing/anomaly classification and may be developed with AI-assisted coding/debugging tools. The actual runtime architecture does not depend on an LLM making the final safety decision. Significant AI/tool assistance should be disclosed wherever the competition rules require it.
+## AI & External Tools Disclosure
+
+AI tools were used during development for brainstorming, code drafting, debugging, documentation, UI iteration, and reviewing testing approaches.
+
+For the submission media, I also used Google NotebookLM/Gemini to help generate the slide deck and video overview from the project materials and research sources I provided. I used this because most of my remaining hackathon time was spent benchmarking, testing QR decoding, checking payment-QR behavior, and validating the project before submission.
+
+The QuishLens security pipeline itself does not use an LLM to make the final verdict. Its core logic uses QR decoding, static URL analysis, Random Forest models, payment-QR parsing, contextual text analysis, threat-intelligence checks, and deterministic risk scoring.
 
 ---
 
